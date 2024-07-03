@@ -509,13 +509,26 @@ exports.connect = function(config, intern, callback) {
     else
       host = parseObjects(config, port, length);
   } else {
+    if(config.port === undefined
+        && config.useSrvRecord !== undefined
+        && String(config.useSrvRecord) == 'true') {
 
-    host = config.host + ':' + port;
+      // port must not be set if protocol is mongo+srv
+      host = config.host;
+    } else {
+      host = config.host + ':' + port;
+    }
   }
 
-  var mongoString = 'mongodb://';
+  var mongoString;
 
-  if(config.user !== undefined && config.password !== undefined) {
+  if (config.useSrvRecord !== undefined && String(config.useSrvRecord) == 'true') {
+    mongoString = 'mongodb+srv://';
+  } else {
+    mongoString = 'mongodb://';
+  }
+
+  if(config.user !== undefined && config.password !== undefined && config.user !== "dummy" && config.password !== "dummy") {
     // Ensure user and password can contain special characters like "@" so app doesn't throw an exception when connecting to MongoDB
     config.user = encodeURIComponent(config.user);
     config.password = encodeURIComponent(config.password);
@@ -527,7 +540,14 @@ exports.connect = function(config, intern, callback) {
 
   var extraParams = [];
   if (config.ssl) {
-    extraParams.push('ssl=true');
+    extraParams.push(`ssl=true`);
+  } else {
+    extraParams.push(`ssl=false`);
+  }
+
+  if (config.tlsCAFile) {
+    extraParams.push(`tls=true`);
+    extraParams.push(`tlsCAFile=${config.tlsCAFile}`);
   }
 
   if(config.authSource !== undefined && config.user !== undefined && config.password !== undefined) {

@@ -1,0 +1,30 @@
+name: Publish
+on:
+  release:
+    types: [created]
+
+env:
+  version: "1.0.0-g${{ github.sha }}"
+  package: "@${{ github.repository }}"
+  registry_url: "https://npm.pkg.github.com"
+  scope: "${{ github.repository_owner }}"
+
+jobs:
+  github_package:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v2
+      # Setup .npmrc file to publish to GitHub Packages
+      - uses: actions/setup-node@v2
+        with:
+          node-version: '12.x'
+          registry-url: '${{ env.registry_url }}'
+          # Defaults to the user or organization that owns the workflow file
+          scope: '${{ env.scope }}'
+      - run: npm install
+      - run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
