@@ -425,7 +425,14 @@ var MongodbDriver = Base.extend({
    * Closes the connection to mongodb
    */
   close: function(callback) {
-    return Promise.resolve().nodeify(callback);
+    return new Promise(function(resolve, reject) {
+      try {
+        this.connection.close(); // close is synchronous
+        resolve();
+      } catch (err) {
+        reject(err);
+      }
+    }.bind(this)).nodeify(callback);
   },
 
   buildWhereClause: function() {
